@@ -16,6 +16,11 @@
 #include "dobot/SetPTPJointParams.h"
 #include "dobot/SetPTPJumpParams.h"
 
+double z_height_;
+double arm_range_;
+double x_bias_;
+double y_bias_;
+
 void joyCallback(const sensor_msgs::Joy::ConstPtr& msg) {
     double joy_x1 = msg->axes[3];
     double joy_y1 = msg->axes[4];
@@ -29,23 +34,35 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg) {
     client_sub = m.serviceClient<dobot::SetPTPCmd>("/DobotServer/SetPTPCmd");
 
     srv_s.request.ptpMode = 2;
-    // srv_s.request.x = msg.position.x;
-    // srv_s.request.y = msg.position.y;
-    // srv_s.request.z = msg.position.z;
-    // srv_s.request.r = msg.orientation.x;
-    srv_s.request.x = (joy_y1 * 50) + 200;
-    srv_s.request.y = (joy_x1 * 50);
-    // srv_s.request.z = (joy_y2 + 1)*10;
-    srv_s.request.z = -65.0;
+    srv_s.request.x = (joy_y1 * arm_range_) + x_bias_;
+    srv_s.request.y = (joy_x1 * arm_range_) + y_bias_;
+    srv_s.request.z = z_height_;
     srv_s.request.r = 0;
-
     client_sub.call(srv_s);
+
+    // Clear the command queue
+    ros::ServiceClient client;
+    client = m.serviceClient<dobot::SetQueuedCmdClear>(
+        "/DobotServer/SetQueuedCmdClear");
+    dobot::SetQueuedCmdClear srv2;
+    client.call(srv2);
 }
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "DobotClient_Topic");
     ros::NodeHandle n;
+    ros::NodeHandle n_param("~");
     ros::ServiceClient client;
+
+    int xyz_velocity_;
+    int xyz_acceleration_;
+
+    n_param.param<int>("xyz_velocity", xyz_velocity_, 5000);
+    n_param.param<int>("xyz_acceleration", xyz_acceleration_, 2000);
+    n_param.param<double>("z_height", z_height_, 10.0);
+    n_param.param<double>("arm_range", arm_range_, 20.0);
+    n_param.param<double>("x_bias", x_bias_, 200.0);
+    n_param.param<double>("y_bias", y_bias_, 0.0);
 
     // SetCmdTimeout
     client =
@@ -113,8 +130,10 @@ int main(int argc, char **argv) {
             "/DobotServer/SetPTPCoordinateParams");
         dobot::SetPTPCoordinateParams srv;
 
-        srv.request.xyzVelocity = 3000;
-        srv.request.xyzAcceleration = 2600;
+        srv.request.xyzVelocity = xyz_velocity_;
+        srv.request.xyzAcceleration = xyz_acceleration_;
+        //srv.request.xyzVelocity = 9000;
+        //srv.request.xyzAcceleration = 2000;
         srv.request.rVelocity = 100;
         srv.request.rAcceleration = 100;
         srv.request.isQueued = false;

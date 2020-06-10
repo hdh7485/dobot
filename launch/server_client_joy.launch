@@ -1,8 +1,14 @@
 <launch>
-    <node pkg="dobot" type="DobotServer" name="dobot_server" args="/dev/ttyUSB1" />
+    <node pkg="dobot" type="DobotServer" name="dobot_server" args="/dev/ttyUSB0" />
     <node pkg="joy" type="joy_node" name="joy_node">
-        <param name="autoreapeat_rate" value="10" />
-        <param name="coalesce_interval" value="0.15" />
+        <param name="autoreapeat_rate" value="100.0" />
+        <param name="coalesce_interval" value="0.001" />
     </node>
-    <node pkg="dobot" type="DobotClient_JOY2PTP" name="dobot_client_joy2ptp" />
+    <node pkg="dobot" type="DobotClient_JOY2PTP" name="dobot_client_joy2ptp" >
+        <param name="xyz_velocity"     value="10000" />
+        <param name="xyz_acceleration" value="2000" />
+        <param name="x_bias"           value="200.0" />
+        <param name="y_bias"           value="0.0" />
+        <param name="z_height"         value="10.0" />
+    </node>
 </launch>
