@@ -1,6 +1,8 @@
 <launch>
     <node pkg="dobot" type="DobotServer" name="dobot_server" args="/dev/ttyUSB0" />
     <node pkg="joy" type="joy_node" name="joy_node">
+        <param name="dev" value="/dev/input/js1" />
+        <param name="deadzone" value="0.05" />
         <param name="autoreapeat_rate" value="100.0" />
         <param name="coalesce_interval" value="0.001" />
     </node>
